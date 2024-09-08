@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "[my-framework] build --output public",
     "watch": "nodemon --trace-warnings app.js | \"./node_modules/.bin/pino-pretty\" --translateTime --colorize",
     "start": "node app.js | \"./node_modules/.bin/pino-pretty\" --translateTime --colorize"
   },
