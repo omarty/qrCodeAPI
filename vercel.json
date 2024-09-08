@@ -1,0 +1,16 @@
+{
+    "version": 2,
+    "name": "qrCodeApp",
+    "builds": [
+        {
+            "src": "app.js",
+            "use": "@vercel/mode"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "/app.js"
+        }
+    ]
+}
