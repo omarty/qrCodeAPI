@@ -20,10 +20,14 @@ const qrCodeSchema = new Schema({
         type: String,
         require: true,
         enum: {
-            values: ["valide", "used"],
+            values: ["valide", "used", "expired"],
             message: '{VALUE} is not supported!'
         },
         default: "valide"
+    },
+
+    expiredAt: {
+        type: Date
     },
 
     montant: {

@@ -21,6 +21,10 @@ const deleteQrCode= async(req, res)=> {
     res.json(await qrCodeService.deleteQrCode(identifiant))
 }
 
+const deleteAll= async(req, res)=> {
+    res.json(await qrCodeService.deleteAll())
+}
+
 module.exports = {
-    getAllQrCode, checkQrCode, generateFiche, deleteQrCode
+    getAllQrCode, checkQrCode, generateFiche, deleteQrCode, deleteAll
 }

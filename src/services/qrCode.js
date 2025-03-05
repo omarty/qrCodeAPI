@@ -1,5 +1,6 @@
 const models = require("../models");
-const logger = require('../logger')
+const logger = require('../logger');
+const { DateTime } = require("luxon");
 
 
 
@@ -9,8 +10,9 @@ const addQrCode = async (
     montant
 
 ) => {
+    const expiredAt= DateTime.now().plus({ years: 1 });
     const qrCode = models.QrCode({
-        identifiant, montant
+        identifiant, montant, expiredAt
     })
     logger.info('start saving new qrCode')
     try {
@@ -44,28 +46,46 @@ const getAllQrCode = async () => {
 }
 
 
+
 const checkQrCode = async (identifiant) => {
-    const qrCode = await models.QrCode.findOne({ identifiant })
-    if (qrCode) {
-        if (qrCode?.state == "valide") {
-            const test = await models.QrCode.findOneAndUpdate(
-                { identifiant },
-                { $set: { scannedAt: Date.now(), state: "used" } },
-                { new: true }
-            );
-            return { success: true, montant: qrCode?.montant, creationDate: qrCode?.createdAt, statut: "valide" }
-        } else if (qrCode?.state == "used") {
-            return { success: true, montant: qrCode?.montant, scannedAt: qrCode?.scannedAt, statut: "used" }
-        }
-        //  else if (qrCode?.state == "expired") {
-        //     return { success: true, qr_statut: "expired" }
-        // } else if (qrCode?.state == "destroyed") {
-        //     return { success: true, qr_statut: "destroyed" }
-        // }
-    } else {
-        return { success: false, qr_statut: 'notFound' }
+    const qrCode = await models.QrCode.findOne({ identifiant });
+
+    if (!qrCode) {
+        return { success: false, qr_statut: 'notFound' };
     }
-}
+
+    // Vérification si déjà expiré
+    if (qrCode.state === "expired") {
+        return { success: true, montant: qrCode.montant, scannedAt: qrCode.scannedAt, statut: "expired" };
+    }
+
+    // Vérification de l'expiration
+    const expiredAt = DateTime.fromJSDate(qrCode.expiredAt); // Conversion en Luxon DateTime
+    if (expiredAt < DateTime.now()) {
+        await models.QrCode.findOneAndUpdate(
+            { identifiant },
+            { $set: { state: "expired" } },
+            { new: true }
+        );
+        return { success: true, montant: qrCode.montant, scannedAt: qrCode.scannedAt, statut: "expired" };
+    }
+
+    // Vérification de l'état "valide"
+    if (qrCode.state === "valide") {
+        const updatedQrCode = await models.QrCode.findOneAndUpdate(
+            { identifiant },
+            { $set: { scannedAt: new Date(), state: "used" } }, // Utilisation de `new Date()`
+            { new: true }
+        );
+        return { success: true, montant: updatedQrCode.montant, creationDate: updatedQrCode.createdAt, statut: "valide" };
+    }
+
+    // Vérification de l'état "used"
+    if (qrCode.state === "used") {
+        return { success: true, montant: qrCode.montant, scannedAt: qrCode.scannedAt, statut: "used" };
+    }
+};
+
 
 
 const deleteQrCode = async (identifiant) => {
@@ -76,7 +96,18 @@ const deleteQrCode = async (identifiant) => {
     return { success: false }
 }
 
+const deleteAll = async () => {
+    const result = await models.QrCode.deleteMany({});
+    
+    if (result.deletedCount > 0) {
+        return { success: true, deletedCount: result.deletedCount };
+    }
+    
+    return { success: false, message: "No documents found to delete" };
+};
+
+
 
 module.exports = {
-    addQrCode, getAllQrCode, checkQrCode, generateQrFiche, deleteQrCode
+    addQrCode, getAllQrCode, checkQrCode, generateQrFiche, deleteQrCode, deleteAll
 }

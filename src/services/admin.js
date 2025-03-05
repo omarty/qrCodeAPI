@@ -3,7 +3,6 @@ const logger = require('../logger')
 
 
 const login = async (phoneNumber, password) => {
-    console.log(phoneNumber)
     const retrivedAdmin = await models.Admin.findOne({ phoneNumber: phoneNumber })
     if (retrivedAdmin) {
 
