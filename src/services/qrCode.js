@@ -18,7 +18,7 @@ const addQrCode = async (
     try {
         await qrCode.save();
         logger.info('qrCode saved')
-        return { success: true, identifiant }
+        return { success: true, identifiant, expiredAt }
     } catch (error) {
         return { success: false }
     }
@@ -56,18 +56,18 @@ const checkQrCode = async (identifiant) => {
 
     // Vérification si déjà expiré
     if (qrCode.state === "expired") {
-        return { success: true, montant: qrCode.montant, scannedAt: qrCode.scannedAt, statut: "expired" };
+        return { success: true, montant: qrCode?.montant, expiredAt: qrCode?.expiredAt, statut: "expired" };
     }
 
     // Vérification de l'expiration
-    const expiredAt = DateTime.fromJSDate(qrCode.expiredAt); // Conversion en Luxon DateTime
+    const expiredAt = DateTime.fromJSDate(qrCode?.expiredAt); // Conversion en Luxon DateTime
     if (expiredAt < DateTime.now()) {
         await models.QrCode.findOneAndUpdate(
             { identifiant },
             { $set: { state: "expired" } },
             { new: true }
         );
-        return { success: true, montant: qrCode.montant, scannedAt: qrCode.scannedAt, statut: "expired" };
+        return { success: true, montant: qrCode.montant, expiredAt: qrCode?.expiredAt, statut: "expired" };
     }
 
     // Vérification de l'état "valide"
